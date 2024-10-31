@@ -1,0 +1,72 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int        @id @default(autoincrement())
+  email         String     @unique
+  password      String
+  firstName     String
+  lastName      String?
+  bio           String?
+  profileImgUrl String?
+  coverImgUrl   String?
+  createdAt     DateTime
+  posts         Post[]
+  likes         Like[]
+  followedBy    Follow[]   @relation("followedBy")
+  following     Follow[]   @relation("following")
+  bookmarks     Bookmark[]
+}
+
+model Post {
+  id           Int        @id @default(autoincrement())
+  content      String
+  createdAt    DateTime
+  imgUrl       String?
+  user         User       @relation(fields: [userId], references: [id])
+  userId       Int
+  replies      Post[]     @relation("SubPosts")
+  parentPost   Post?      @relation("SubPosts", fields: [parentPostId], references: [id])
+  parentPostId Int?
+  likes        Like[]
+  bookmarks    Bookmark[]
+}
+
+model Follow {
+  followedById Int
+  followingId  Int
+  followedBy   User @relation("followedBy", fields: [followedById], references: [id])
+  following    User @relation("following", fields: [followingId], references: [id])
+
+  @@id([followedById, followingId])
+}
+
+model Like {
+  postId Int
+  userId Int
+  post   Post @relation(fields: [postId], references: [id])
+  user   User @relation(fields: [userId], references: [id])
+
+  @@id([postId, userId])
+}
+
+model Bookmark {
+  postId Int
+  userId Int
+  post   Post @relation(fields: [postId], references: [id])
+  user   User @relation(fields: [userId], references: [id])
+
+  @@id([postId, userId])
+}
