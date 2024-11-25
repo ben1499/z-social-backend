@@ -32,8 +32,8 @@ model User {
   createdAt     DateTime
   posts         Post[]
   likes         Like[]
-  followedBy    Follow[]   @relation("followedBy")
-  following     Follow[]   @relation("following")
+  following     Follow[]   @relation("followedBy")
+  followers     Follow[]   @relation("following")
   bookmarks     Bookmark[]
 }
 
