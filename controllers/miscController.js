@@ -10,7 +10,6 @@ exports.uploadImage = [
   passport.authenticate("jwt", { session: false }),
   upload.single("image"),
   (req, res, next) => {
-    console.log(req.file);
     res.json({ url: req.file.path });
   },
 ];

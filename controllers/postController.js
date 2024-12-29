@@ -66,14 +66,36 @@ exports.likePost = [
       return res.status(400).json({ message: "Invalid post id" });
     }
     try {
+      const post = await prisma.post.findUnique({
+        where: {
+          id: +req.params.id
+        },
+        select: {
+          userId: true
+        }
+      });
+      const currentUser = await prisma.user.findUnique({
+        where: { id: req.user.user_id },
+        select: { name: true }
+      });
       await prisma.like.create({
         data: {
           postId: +req.params.id,
           userId: req.user.user_id,
         },
       });
-      res.json({ message: "Post liked successfully " });
+      await prisma.notification.create({
+        data: {
+          type: "LIKE",
+          senderId: req.user.user_id,
+          receiverId: post.userId,
+          postId: +req.params.id,
+          content: `${currentUser.name} liked your post`
+        }
+      })
+      res.json({ message: "Post liked successfully" });
     } catch (err) {
+      console.log(err);
       if (err.code === "P2002") {
         return res.status(500).json({ message: "Post is already liked" });
       } else if (err.code === "P2003") {
@@ -99,8 +121,17 @@ exports.unlikePost = [
           },
         },
       });
+
+      await prisma.notification.deleteMany({
+        where: {
+          postId: +req.params.id,
+          senderId: req.user.user_id,
+          type: "LIKE"
+        }
+      })
       res.json({ message: "Post like removed successfully" });
     } catch (err) {
+      console.log(err);
       if (err.code === "P2025") {
         return res.status(500).json({ message: "Post does not exist" });
       }
@@ -509,13 +540,39 @@ exports.repost = [
       return res.status(400).json({ message: "Invalid post id" });
     }
     try {
-      await prisma.repost.create({
+      const repost = await prisma.repost.create({
         data: {
           postId: +req.params.id,
           userId: req.user.user_id,
           createdAt: new Date(),
         },
       });
+
+      if (repost) {
+        const post = await prisma.post.findUnique({
+          where: {
+            id: +req.params.id
+          },
+          select: {
+            userId: true
+          }
+        });
+        const currentUser = await prisma.user.findUnique({
+          where: { id: req.user.user_id },
+          select: { name: true }
+        });
+  
+        await prisma.notification.create({
+          data: {
+            type: "REPOST",
+            senderId: req.user.user_id,
+            receiverId: post.userId,
+            postId: +req.params.id,
+            content: `${currentUser.name} reposted your post`
+          }
+        })
+      }
+
       res.json({ message: "Post reposted successfully" });
     } catch (err) {
       console.log(err);
@@ -544,6 +601,14 @@ exports.removeRepost = [
           },
         },
       });
+
+      await prisma.notification.deleteMany({
+        where: {
+          postId: +req.params.id,
+          senderId: req.user.user_id,
+          type: "REPOST"
+        }
+      })
       res.json({ message: "Post repost removed successfully" });
     } catch (err) {
       console.log(err);

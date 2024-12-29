@@ -155,6 +155,20 @@ exports.followUser = [
             followingId: +req.params.id,
           },
         });
+
+        const currentUser = await prisma.user.findUnique({
+          where: { id: req.user.user_id },
+          select: { name: true }
+        });
+        await prisma.notification.create({
+          data: {
+            type: "FOLLOW",
+            senderId: req.user.user_id,
+            receiverId: +req.params.id,
+            content: `${currentUser.name} followed you`
+          }
+        });
+
         return res.json({ message: "Followed user successfully" });
       } catch (err) {
         if (err.code === "P2002") {
@@ -183,6 +197,14 @@ exports.unfollowUser = [
             },
           },
         });
+
+        await prisma.notification.deleteMany({
+          where: {
+            senderId: req.user.user_id,
+            receiverId: +req.params.id,
+            type: "FOLLOW"
+          }
+        })
         return res.json({ message: "Unfollowed user successfully" });
       } catch (err) {
         if (err.code === "P2025") {

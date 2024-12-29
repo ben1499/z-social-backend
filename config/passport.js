@@ -20,9 +20,6 @@ const strategyTwitter = new TwitterStrategy(
     callbackURL: "http://127.0.0.1:3000/auth/twitter/callback",
   },
   async function (token, tokenSecret, profile, cb) {
-    // console.log("token", token);
-    // console.log("secret", tokenSecret);
-    console.log(profile);
     try {
       const existingUser = await prisma.user.findUnique({
         where: {

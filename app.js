@@ -7,6 +7,7 @@ const authRouter = require("./routes/auth");
 const userRouter = require("./routes/user");
 const indexRouter = require("./routes/index");
 const postRouter = require("./routes/post");
+const notificationRouter = require("./routes/notification");
 
 require("./config/passport")(passport);
 
@@ -37,6 +38,7 @@ app.use("/", indexRouter);
 app.use("/auth", authRouter);
 app.use("/users", userRouter);
 app.use("/posts", postRouter);
+app.use("/notifications", notificationRouter);
 
 // error handler
 app.use(function (err, req, res, next) {

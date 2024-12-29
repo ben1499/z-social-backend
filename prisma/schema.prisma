@@ -21,36 +21,39 @@ model Session {
 }
 
 model User {
-  id            Int        @id @default(autoincrement())
-  email         String?    @unique
-  password      String?
-  username      String     @unique
-  name          String
-  bio           String?
-  profileImgUrl String?
-  coverImgUrl   String?
-  createdAt     DateTime
-  posts         Post[]
-  likes         Like[]
-  following     Follow[]   @relation("followedBy")
-  followers     Follow[]   @relation("following")
-  bookmarks     Bookmark[]
-  reposts       Repost[]
+  id                    Int            @id @default(autoincrement())
+  email                 String?        @unique
+  password              String?
+  username              String         @unique
+  name                  String
+  bio                   String?
+  profileImgUrl         String?
+  coverImgUrl           String?
+  createdAt             DateTime
+  posts                 Post[]
+  likes                 Like[]
+  following             Follow[]       @relation("followedBy")
+  followers             Follow[]       @relation("following")
+  bookmarks             Bookmark[]
+  reposts               Repost[]
+  senderNotifications   Notification[] @relation("senderNotify")
+  receiverNotifications Notification[] @relation("receiverNotify")
 }
 
 model Post {
-  id           Int        @id @default(autoincrement())
-  content      String
-  createdAt    DateTime
-  imgUrl       String?
-  user         User       @relation(fields: [userId], references: [id])
-  userId       Int
-  replies      Post[]     @relation("SubPosts")
-  parentPost   Post?      @relation("SubPosts", fields: [parentPostId], references: [id])
-  parentPostId Int?
-  likes        Like[]
-  bookmarks    Bookmark[]
-  reposts      Repost[]
+  id            Int            @id @default(autoincrement())
+  content       String
+  createdAt     DateTime
+  imgUrl        String?
+  user          User           @relation(fields: [userId], references: [id])
+  userId        Int
+  replies       Post[]         @relation("SubPosts")
+  parentPost    Post?          @relation("SubPosts", fields: [parentPostId], references: [id])
+  parentPostId  Int?
+  likes         Like[]
+  bookmarks     Bookmark[]
+  reposts       Repost[]
+  notifications Notification[]
 }
 
 model Follow {
@@ -88,4 +91,24 @@ model Repost {
   createdAt DateTime
 
   @@id([postId, userId])
+}
+
+model Notification {
+  id         Int              @id @default(autoincrement())
+  content    String
+  type       NotificationType
+  receiver   User             @relation("receiverNotify", fields: [receiverId], references: [id])
+  receiverId Int
+  sender     User             @relation("senderNotify", fields: [senderId], references: [id])
+  senderId   Int
+  post       Post?            @relation(fields: [postId], references: [id])
+  postId     Int?
+  isRead     Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+}
+
+enum NotificationType {
+  LIKE
+  REPOST
+  FOLLOW
 }
