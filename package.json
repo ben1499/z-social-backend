@@ -16,6 +16,7 @@
     "@quixo3/prisma-session-store": "^3.1.13",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.5.1",
+    "cors": "^2.8.5",
     "express": "^4.21.1",
     "express-async-handler": "^1.2.0",
     "express-session": "^1.18.1",

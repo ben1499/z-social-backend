@@ -8,10 +8,13 @@ const userRouter = require("./routes/user");
 const indexRouter = require("./routes/index");
 const postRouter = require("./routes/post");
 const notificationRouter = require("./routes/notification");
+const cors = require("cors");
 
 require("./config/passport")(passport);
 
 const app = express();
+
+app.use(cors());
 
 // app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

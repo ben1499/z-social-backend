@@ -5,6 +5,42 @@ const { body, validationResult } = require("express-validator");
 
 const prisma = new PrismaClient();
 
+function formatDate(date) {
+  return `${date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  })} ${date.toLocaleDateString("en-IN", { dateStyle: "medium" })}`;
+}
+
+exports.getProfile = [
+  passport.authenticate("jwt", { session: false }),
+  asyncHandler(async (req, res, next) => {
+    try {
+      const user = await prisma.user.findUnique({
+        where: {
+          id: req.user.user_id
+        },
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          profileImgUrl: true,
+          coverImgUrl: true,
+          createdAt: true
+        }
+      })
+
+      user.createdAt = formatDate(user.createdAt);
+
+      res.json({ data: user });
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Something went wrong" });
+    }
+  })
+];
+
 exports.getUser = [
   passport.authenticate("jwt", { session: false }),
   asyncHandler(async (req, res, next) => {

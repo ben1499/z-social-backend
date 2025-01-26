@@ -256,6 +256,14 @@ exports.getPosts = [
               userId: req.user.user_id,
             },
           },
+          user: {
+            select: {
+              name: true,
+              profileImgUrl: true,
+              // id: true,
+              username: true
+            }
+          },
           _count: {
             select: {
               likes: true,
@@ -279,7 +287,9 @@ exports.getPosts = [
           include: {
             user: {
               select: {
+                id: true,
                 username: true,
+                name: true
               },
             },
             post: {
@@ -293,6 +303,14 @@ exports.getPosts = [
                   where: {
                     userId: req.user.user_id,
                   },
+                },
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    username: true,
+                    profileImgUrl: true
+                  }
                 },
                 _count: {
                   select: {
@@ -314,14 +332,16 @@ exports.getPosts = [
 
       timeline = timeline.map((item) => {
         // if it is a repost
-        if (Object.hasOwn(item, "user")) {
-          console.log(item);
+        if (Object.hasOwn(item, "post")) {
           return {
-            keyId: `repost-${item.postId}`,
+            keyId: `repost-${item.postId}-${item.userId}`,
             id: item.postId,
-            username: item.user.username,
+            repostUser: item.user,
+            // username: item.user.username,
             content: item.post.content,
-            createdAt: formatDate(item.createdAt),
+            user: item.post.user,
+            createdAt: item.post.createdAt,
+            createdAtFormatted: formatDate(item.post.createdAt),
             imgUrl: item.post.imgUrl,
             userId: item.post.userId,
             parentPostId: item.post.parentPostId,
@@ -335,7 +355,7 @@ exports.getPosts = [
             isRepostedByUser: item.userId === req.user.user_id ? true : false
           };
         } else {
-          const { id, content, createdAt, imgUrl, userId, parentPostId, _count, likes, bookmarks, reposts } = item;
+          const { id, content, createdAt, imgUrl, userId, parentPostId, _count, likes, bookmarks, reposts, user } = item;
           return {
             keyId: `post-${item.id}`,
             id,
@@ -343,7 +363,9 @@ exports.getPosts = [
             imgUrl,
             userId,
             parentPostId,
-            createdAt: formatDate(createdAt),
+            user,
+            createdAt: createdAt,
+            createdAtFormatted: formatDate(createdAt),
             likeCount: _count.likes,
             bookmarkCount: _count.bookmarks,
             replyCount: _count.replies,
