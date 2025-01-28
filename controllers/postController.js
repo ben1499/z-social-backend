@@ -234,6 +234,10 @@ exports.getPosts = [
           // by default return only top level posts
           parentPostId: null,
           // parentPostId: req.query.parent_post_id ? +req.query.parent_post_id : null
+          content: {
+            contains: req.query.searchQuery,
+            mode: "insensitive"
+          }
         },
         orderBy: [
           {
