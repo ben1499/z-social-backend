@@ -84,15 +84,18 @@ exports.likePost = [
           userId: req.user.user_id,
         },
       });
-      await prisma.notification.create({
-        data: {
-          type: "LIKE",
-          senderId: req.user.user_id,
-          receiverId: post.userId,
-          postId: +req.params.id,
-          content: `${currentUser.name} liked your post`
-        }
-      })
+
+      if (req.user.user_id !== post.userId) {
+        await prisma.notification.create({
+          data: {
+            type: "LIKE",
+            senderId: req.user.user_id,
+            receiverId: post.userId,
+            postId: +req.params.id,
+            content: `${currentUser.name} liked your post`
+          }
+        })
+      }
       res.json({ message: "Post liked successfully" });
     } catch (err) {
       console.log(err);
@@ -588,15 +591,17 @@ exports.repost = [
           select: { name: true }
         });
   
-        await prisma.notification.create({
-          data: {
-            type: "REPOST",
-            senderId: req.user.user_id,
-            receiverId: post.userId,
-            postId: +req.params.id,
-            content: `${currentUser.name} reposted your post`
-          }
-        })
+        if (req.user.user_id !== +req.params.id) {
+          await prisma.notification.create({
+            data: {
+              type: "REPOST",
+              senderId: req.user.user_id,
+              receiverId: post.userId,
+              postId: +req.params.id,
+              content: `${currentUser.name} reposted your post`
+            }
+          })
+        }
       }
 
       res.json({ message: "Post reposted successfully" });

@@ -12,6 +12,9 @@ exports.getNotifications = [
       const notifications = await prisma.notification.findMany({
         where: {
           receiverId: req.user.user_id
+        },
+        orderBy: {
+          createdAt: "desc"
         }
       });
   
