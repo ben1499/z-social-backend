@@ -413,6 +413,19 @@ exports.getPost = [
           id: +req.params.id,
         },
         include: {
+          user: {
+            select: {
+              username: true,
+              name: true,
+              profileImgUrl: true,
+              id: true,
+            }
+          },
+          reposts: {
+            where: {
+              userId: req.user.user_id
+            }
+          },
           likes: {
             where: {
               userId: req.user.user_id,
@@ -432,7 +445,20 @@ exports.getPost = [
             },
           },
           replies: {
+            orderBy: [
+              {
+                createdAt: "desc"
+              }
+            ],
             include: {
+              user: {
+                select: {
+                  username: true,
+                  name: true,
+                  profileImgUrl: true,
+                  id: true,
+                }
+              },
               reposts: {
                 where: {
                   userId: req.user.user_id
@@ -460,16 +486,21 @@ exports.getPost = [
           },
         },
       });
+
+      console.dir(post);
+
       if (post) {
         const { _count, ...formattedPost } = post;
 
-        formattedPost.createdAt = formatDate(post.createdAt);
+        formattedPost.createdAt = post.createdAt;
+        formattedPost.createdAtFormatted = formatDate(post.createdAt);
         formattedPost.likeCount = _count.likes;
         formattedPost.bookmarkCount = _count.bookmarks;
         formattedPost.replyCount = _count.replies;
         formattedPost.repostCount = _count.reposts;
         formattedPost.isLiked = formattedPost.likes.length > 0;
         formattedPost.isBookmarked = formattedPost.bookmarks.length > 0;
+        formattedPost.isRepostedByUser = formattedPost.reposts.length > 0;
 
         delete formattedPost.likes;
         delete formattedPost.bookmarks;
@@ -479,10 +510,13 @@ exports.getPost = [
             id: reply.id,
             content: reply.content,
             imgUrl: reply.imgUrl,
+            user: reply.user,
             userId: reply.userId,
             parentPostId: reply.parentPostId,
             likeCount: reply._count.likes,
             bookmarkCount: reply._count.bookmarks,
+            createdAt: reply.createdAt,
+            createdAtFormatted: formatDate(reply.createdAt),
             replyCount: reply._count.replies,
             repostCount: reply._count.reposts,
             isLiked: reply.likes.length > 0,
@@ -591,7 +625,7 @@ exports.repost = [
           select: { name: true }
         });
   
-        if (req.user.user_id !== +req.params.id) {
+        if (req.user.user_id !== post.userId) {
           await prisma.notification.create({
             data: {
               type: "REPOST",

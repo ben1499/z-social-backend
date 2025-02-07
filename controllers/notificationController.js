@@ -15,7 +15,22 @@ exports.getNotifications = [
         },
         orderBy: {
           createdAt: "desc"
-        }
+        },
+        include: {
+          sender: {
+            select: {
+              profileImgUrl: true,
+              username: true,
+              id: true
+            }
+          },
+          post: {
+            omit: {
+              imgUrl: true,
+              createdAt: true
+            }
+          }
+        },
       });
   
       // Mark notifications as read after listing them
