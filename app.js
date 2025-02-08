@@ -8,6 +8,7 @@ const userRouter = require("./routes/user");
 const indexRouter = require("./routes/index");
 const postRouter = require("./routes/post");
 const notificationRouter = require("./routes/notification");
+const postController = require("./controllers/postController");
 const cors = require("cors");
 
 require("./config/passport")(passport);
@@ -42,6 +43,8 @@ app.use("/auth", authRouter);
 app.use("/users", userRouter);
 app.use("/posts", postRouter);
 app.use("/notifications", notificationRouter);
+
+app.get("/bookmarks", postController.getBookmarkedPosts);
 
 // error handler
 app.use(function (err, req, res, next) {

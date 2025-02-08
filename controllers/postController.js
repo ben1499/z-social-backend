@@ -5,6 +5,14 @@ const passport = require("passport");
 
 const prisma = new PrismaClient();
 
+function formatDate(date) {
+  return `${date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  })} ${date.toLocaleDateString("en-IN", { dateStyle: "medium" })}`;
+}
+
 exports.createPost = [
   passport.authenticate("jwt", { session: false }),
   body("content")
@@ -51,6 +59,7 @@ exports.deletePost = [
       });
       res.json({ message: "Post deleted successfully " });
     } catch (err) {
+      console.log(err);
       if (err.code === "P2025") {
         return res.status(500).json({ message: "Post does not exist" });
       }
@@ -68,15 +77,15 @@ exports.likePost = [
     try {
       const post = await prisma.post.findUnique({
         where: {
-          id: +req.params.id
+          id: +req.params.id,
         },
         select: {
-          userId: true
-        }
+          userId: true,
+        },
       });
       const currentUser = await prisma.user.findUnique({
         where: { id: req.user.user_id },
-        select: { name: true }
+        select: { name: true },
       });
       await prisma.like.create({
         data: {
@@ -92,9 +101,9 @@ exports.likePost = [
             senderId: req.user.user_id,
             receiverId: post.userId,
             postId: +req.params.id,
-            content: `${currentUser.name} liked your post`
-          }
-        })
+            content: `${currentUser.name} liked your post`,
+          },
+        });
       }
       res.json({ message: "Post liked successfully" });
     } catch (err) {
@@ -129,9 +138,9 @@ exports.unlikePost = [
         where: {
           postId: +req.params.id,
           senderId: req.user.user_id,
-          type: "LIKE"
-        }
-      })
+          type: "LIKE",
+        },
+      });
       res.json({ message: "Post like removed successfully" });
     } catch (err) {
       console.log(err);
@@ -239,8 +248,8 @@ exports.getPosts = [
           // parentPostId: req.query.parent_post_id ? +req.query.parent_post_id : null
           content: {
             contains: req.query.searchQuery,
-            mode: "insensitive"
-          }
+            mode: "insensitive",
+          },
         },
         orderBy: [
           {
@@ -250,8 +259,8 @@ exports.getPosts = [
         include: {
           reposts: {
             where: {
-              userId: req.user.user_id
-            }
+              userId: req.user.user_id,
+            },
           },
           likes: {
             where: {
@@ -268,15 +277,15 @@ exports.getPosts = [
               name: true,
               profileImgUrl: true,
               // id: true,
-              username: true
-            }
+              username: true,
+            },
           },
           _count: {
             select: {
               likes: true,
               bookmarks: true,
               replies: true,
-              reposts: true
+              reposts: true,
             },
           },
         },
@@ -296,7 +305,7 @@ exports.getPosts = [
               select: {
                 id: true,
                 username: true,
-                name: true
+                name: true,
               },
             },
             post: {
@@ -316,15 +325,15 @@ exports.getPosts = [
                     id: true,
                     name: true,
                     username: true,
-                    profileImgUrl: true
-                  }
+                    profileImgUrl: true,
+                  },
                 },
                 _count: {
                   select: {
                     likes: true,
                     bookmarks: true,
                     replies: true,
-                    reposts: true
+                    reposts: true,
                   },
                 },
               },
@@ -359,10 +368,22 @@ exports.getPosts = [
             isLiked: item.post.likes.length > 0,
             isBookmarked: item.post.bookmarks.length > 0,
             isRepost: true,
-            isRepostedByUser: item.userId === req.user.user_id ? true : false
+            isRepostedByUser: item.userId === req.user.user_id ? true : false,
           };
         } else {
-          const { id, content, createdAt, imgUrl, userId, parentPostId, _count, likes, bookmarks, reposts, user } = item;
+          const {
+            id,
+            content,
+            createdAt,
+            imgUrl,
+            userId,
+            parentPostId,
+            _count,
+            likes,
+            bookmarks,
+            reposts,
+            user,
+          } = item;
           return {
             keyId: `post-${item.id}`,
             id,
@@ -380,7 +401,7 @@ exports.getPosts = [
             isRepostedByUser: reposts.length > 0,
             isLiked: likes.length > 0,
             isBookmarked: bookmarks.length > 0,
-            isDeletable: userId === req.user.user_id ? true : false
+            isDeletable: userId === req.user.user_id ? true : false,
           };
         }
       });
@@ -393,13 +414,109 @@ exports.getPosts = [
   }),
 ];
 
-function formatDate(date) {
-  return `${date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  })} ${date.toLocaleDateString("en-IN", { dateStyle: "medium" })}`;
-}
+exports.getBookmarkedPosts = [
+  passport.authenticate("jwt", { session: false }),
+  asyncHandler(async (req, res, next) => {
+    try {
+      const bookmarks = await prisma.bookmark.findMany({
+        where: {
+          userId: req.user.user_id,
+          post: {
+            OR: [
+              {
+                content: {
+                  contains: req.query.searchQuery,
+                  mode: "insensitive",
+                },
+              },
+              {
+                user: {
+                  OR: [
+                    {
+                      username: {
+                        contains: req.query.searchQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      name: {
+                        contains: req.query.searchQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+        include: {
+          post: {
+            include: {
+              user: {
+                omit: {
+                  email: true,
+                  password: true,
+                  createdAt: true,
+                  bio: true,
+                  coverImgUrl: true,
+                },
+              },
+              likes: {
+                where: {
+                  userId: req.user.user_id,
+                },
+                take: 1,
+              },
+              reposts: {
+                where: {
+                  userId: req.user.user_id,
+                },
+              },
+              _count: {
+                select: {
+                  likes: true,
+                  bookmarks: true,
+                  reposts: true,
+                  replies: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const response = bookmarks.map((item) => {
+        const post = {
+          id: item.post.id,
+          content: item.post.content,
+          createdAt: item.post.createdAt,
+          imgUrl: item.post.imgUrl,
+          userId: item.post.userId,
+          parentPostId: item.post.parentPostId,
+          replyCount: item.post._count.replies,
+          repostCount: item.post._count.reposts,
+          likeCount: item.post._count.likes,
+          bookmarkCount: item.post._count.bookmarks,
+        };
+
+        return {
+          ...post,
+          keyId: post.id,
+          user: item.post.user,
+          createdAtFormatted: formatDate(item.post.createdAt),
+          isLiked: item.post.likes.length > 0,
+          isRepostedByUser: item.post.reposts.length > 0,
+          isBookmarked: true,
+        };
+      });
+
+      res.json({ data: response });
+    } catch (err) {
+      console.log(err);
+    }
+  }),
+];
 
 exports.getPost = [
   passport.authenticate("jwt", { session: false }),
@@ -419,12 +536,12 @@ exports.getPost = [
               name: true,
               profileImgUrl: true,
               id: true,
-            }
+            },
           },
           reposts: {
             where: {
-              userId: req.user.user_id
-            }
+              userId: req.user.user_id,
+            },
           },
           likes: {
             where: {
@@ -441,14 +558,14 @@ exports.getPost = [
               likes: true,
               bookmarks: true,
               replies: true,
-              reposts: true
+              reposts: true,
             },
           },
           replies: {
             orderBy: [
               {
-                createdAt: "desc"
-              }
+                createdAt: "desc",
+              },
             ],
             include: {
               user: {
@@ -457,12 +574,12 @@ exports.getPost = [
                   name: true,
                   profileImgUrl: true,
                   id: true,
-                }
+                },
               },
               reposts: {
                 where: {
-                  userId: req.user.user_id
-                }
+                  userId: req.user.user_id,
+                },
               },
               likes: {
                 where: {
@@ -479,15 +596,13 @@ exports.getPost = [
                   likes: true,
                   bookmarks: true,
                   replies: true,
-                  reposts: true
+                  reposts: true,
                 },
               },
             },
           },
         },
       });
-
-      console.dir(post);
 
       if (post) {
         const { _count, ...formattedPost } = post;
@@ -521,7 +636,7 @@ exports.getPost = [
             repostCount: reply._count.reposts,
             isLiked: reply.likes.length > 0,
             isBookmarked: reply.bookmarks.length > 0,
-            isRepostedByUser: reply.reposts.length > 0
+            isRepostedByUser: reply.reposts.length > 0,
           };
         });
         return res.json({ data: formattedPost });
@@ -544,57 +659,59 @@ exports.getPostReplies = [
     try {
       const replies = await prisma.post.findMany({
         where: {
-          parentPostId: +req.params.id
+          parentPostId: +req.params.id,
         },
         include: {
           likes: {
             where: {
-              userId: req.user.user_id
-            }
+              userId: req.user.user_id,
+            },
           },
           bookmarks: {
             where: {
-              userId: req.user.user_id
-            }
+              userId: req.user.user_id,
+            },
           },
           reposts: {
             where: {
-              userId: req.user.user_id
-            }
+              userId: req.user.user_id,
+            },
           },
           _count: {
             select: {
               likes: true,
               bookmarks: true,
               replies: true,
-              reposts: true
+              reposts: true,
             },
           },
-        }
-      })
+        },
+      });
 
-      const formattedReplies = replies.map(({createdAt, _count, likes, bookmarks, reposts, ...reply}) => {
-        return {
-          ...reply,
-          createdAt: formatDate(createdAt),
-          isLiked: likes.length > 0,
-          isBookmarked: likes.length > 0,
-          isRepostedByUser: likes.length > 0,
-          likeCount: _count.likes,
-          bookmarkCount: _count.bookmarks,
-          replyCount: _count.replies,
-          repostCount: _count.reposts,
-          isDeletable: reply.userId === req.user.user_id
+      const formattedReplies = replies.map(
+        ({ createdAt, _count, likes, bookmarks, reposts, ...reply }) => {
+          return {
+            ...reply,
+            createdAt: formatDate(createdAt),
+            isLiked: likes.length > 0,
+            isBookmarked: likes.length > 0,
+            isRepostedByUser: likes.length > 0,
+            likeCount: _count.likes,
+            bookmarkCount: _count.bookmarks,
+            replyCount: _count.replies,
+            repostCount: _count.reposts,
+            isDeletable: reply.userId === req.user.user_id,
+          };
         }
-      })
+      );
 
-      res.json({ data: formattedReplies })
-    } catch(err) {
+      res.json({ data: formattedReplies });
+    } catch (err) {
       console.log(err);
       res.status(500).json({ message: "Something went wrong" });
     }
-  })
-]
+  }),
+];
 
 exports.repost = [
   passport.authenticate("jwt", { session: false }),
@@ -614,17 +731,17 @@ exports.repost = [
       if (repost) {
         const post = await prisma.post.findUnique({
           where: {
-            id: +req.params.id
+            id: +req.params.id,
           },
           select: {
-            userId: true
-          }
+            userId: true,
+          },
         });
         const currentUser = await prisma.user.findUnique({
           where: { id: req.user.user_id },
-          select: { name: true }
+          select: { name: true },
         });
-  
+
         if (req.user.user_id !== post.userId) {
           await prisma.notification.create({
             data: {
@@ -632,9 +749,9 @@ exports.repost = [
               senderId: req.user.user_id,
               receiverId: post.userId,
               postId: +req.params.id,
-              content: `${currentUser.name} reposted your post`
-            }
-          })
+              content: `${currentUser.name} reposted your post`,
+            },
+          });
         }
       }
 
@@ -671,9 +788,9 @@ exports.removeRepost = [
         where: {
           postId: +req.params.id,
           senderId: req.user.user_id,
-          type: "REPOST"
-        }
-      })
+          type: "REPOST",
+        },
+      });
       res.json({ message: "Post repost removed successfully" });
     } catch (err) {
       console.log(err);
