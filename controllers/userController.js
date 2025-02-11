@@ -53,6 +53,12 @@ exports.getUser = [
           select: {
             followers: true,
             following: true,
+            posts: {
+              where: {
+                parentPostId: null
+              }
+            },
+            reposts: true
           },
         },
       },
@@ -74,6 +80,7 @@ exports.getUser = [
       formattedUser.isCurrentUser = req.user.user_id === user.id ? true : false;
       formattedUser.followingCount = _count.following;
       formattedUser.followerCount = _count.followers;
+      formattedUser.postCount = _count.posts + _count.reposts;
       formattedUser.isFollowing = formattedUser.isCurrentUser
         ? null
         : follow
