@@ -518,6 +518,92 @@ exports.getBookmarkedPosts = [
   }),
 ];
 
+exports.getLikedPosts = [
+  passport.authenticate("jwt", { session: false }),
+  asyncHandler(async (req, res, next) => {
+    if (!Number.isInteger(+req.params.userId)) {
+      return res.status(400).json({ message: "Invalid user id" });
+    }
+    try {
+      const user = await prisma.user.findUnique({
+        where: {
+          id: +req.params.userId,
+        },
+        include: {
+          likes: {
+            include: {
+              post: {
+                include: {
+                  user: {
+                    omit: {
+                      email: true,
+                      password: true,
+                      createdAt: true,
+                      bio: true,
+                      coverImgUrl: true,
+                    },
+                  },
+                  likes: {
+                    where: {
+                      userId: req.user.user_id,
+                    },
+                    take: 1,
+                  },
+                  reposts: {
+                    where: {
+                      userId: req.user.user_id,
+                    },
+                  },
+                  _count: {
+                    select: {
+                      likes: true,
+                      bookmarks: true,
+                      reposts: true,
+                      replies: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!user) {
+        return res
+          .status(404)
+          .json({ message: "User with provided user id not found" });
+      }
+
+      const posts = user.likes.map((like) => like.post);
+      const response = posts.map((post) => {
+        return {
+          id: post.id,
+          content: post.content,
+          createdAt: post.createdAt,
+          imgUrl: post.imgUrl,
+          userId: post.userId,
+          parentPostId: post.parentPostId,
+          replyCount: post._count.replies,
+          repostCount: post._count.reposts,
+          likeCount: post._count.likes,
+          bookmarkCount: post._count.bookmarks,
+          keyId: post.id,
+          user: post.user,
+          createdAtFormatted: formatDate(post.createdAt),
+          isLiked: post.likes.length > 0,
+          isRepostedByUser: post.reposts.length > 0,
+          isBookmarked: true,
+        };
+      });
+      return res.json({ data: response });
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Something went wrong" });
+    }
+  }),
+];
+
 exports.getPost = [
   passport.authenticate("jwt", { session: false }),
   asyncHandler(async (req, res, next) => {

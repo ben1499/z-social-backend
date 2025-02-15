@@ -25,4 +25,6 @@ router.get("/:id", postController.getPost);
 
 router.get("/:id/replies", postController.getPostReplies);
 
+router.get("/liked-by/:userId", postController.getLikedPosts);
+
 module.exports = router;
