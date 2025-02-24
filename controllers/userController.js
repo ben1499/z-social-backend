@@ -258,3 +258,43 @@ exports.unfollowUser = [
     }
   }),
 ];
+
+exports.getUserMedia = [
+  passport.authenticate("jwt", { session: false }),
+  asyncHandler(async (req, res, next) => {
+    if (!Number.isInteger(+req.params.id)) {
+      return res.status(400).json({ message: "Invalid user id" });
+    }
+    try {
+      const user = await prisma.user.findUnique({
+        where: {
+          id: +req.params.id
+        },
+        include: {
+          posts: {
+            where: {
+              imgUrl: {
+                not: null
+              }
+            },
+            select: {
+              id: true,
+              imgUrl: true
+            }
+          }
+        }
+      });
+  
+      if (!user) {
+        res.status(404).json({ message: "User not found" });
+      }
+  
+      const posts = user.posts;
+  
+      res.json({ data: posts });
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Something went wrong" });
+    }
+  })
+]

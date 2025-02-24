@@ -15,4 +15,6 @@ router.post("/follow/:id", userController.followUser);
 
 router.delete("/follow/:id", userController.unfollowUser);
 
+router.get("/:id/media", userController.getUserMedia);
+
 module.exports = router;
