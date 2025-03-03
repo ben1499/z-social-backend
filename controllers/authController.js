@@ -127,7 +127,7 @@ exports.twitterAuthCallback = [
       process.env.JWT_SECRET,
       { expiresIn: "1d" },
       (err, token) => {
-        res.json({ token: `Bearer ${token}`, user_id: req.user.id });
+        res.redirect(`${process.env.FRONTEND_URL}/auth-success#token=Bearer ${token}&user_id=${req.user.id}`);
       }
     );
   },

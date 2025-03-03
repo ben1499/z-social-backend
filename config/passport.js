@@ -17,7 +17,7 @@ const strategyTwitter = new TwitterStrategy(
   {
     consumerKey: process.env.X_API_KEY,
     consumerSecret: process.env.X_SECRET_KEY,
-    callbackURL: "http://127.0.0.1:3000/auth/twitter/callback",
+    callbackURL: `${process.env.URL}/auth/twitter/callback`,
   },
   async function (token, tokenSecret, profile, cb) {
     try {
