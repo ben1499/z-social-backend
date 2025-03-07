@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  previewFeatures = ["omitApi"]
 }
 
 datasource db {
@@ -49,7 +48,7 @@ model Post {
   user          User           @relation(fields: [userId], references: [id])
   userId        Int
   replies       Post[]         @relation("SubPosts")
-  parentPost    Post?          @relation("SubPosts", fields: [parentPostId], references: [id])
+  parentPost    Post?          @relation("SubPosts", fields: [parentPostId], references: [id], onDelete: Cascade)
   parentPostId  Int?
   likes         Like[]
   bookmarks     Bookmark[]
