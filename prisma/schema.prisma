@@ -102,7 +102,7 @@ model Notification {
   receiverId Int
   sender     User             @relation("senderNotify", fields: [senderId], references: [id])
   senderId   Int
-  post       Post?            @relation(fields: [postId], references: [id])
+  post       Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId     Int?
   isRead     Boolean          @default(false)
   createdAt  DateTime         @default(now())
