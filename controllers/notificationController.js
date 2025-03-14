@@ -13,6 +13,7 @@ exports.getNotifications = [
         where: {
           receiverId: req.user.user_id
         },
+        take: req.query.limit ? +req.query.limit : undefined,
         orderBy: {
           createdAt: "desc"
         },
