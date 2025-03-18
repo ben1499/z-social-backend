@@ -17,10 +17,22 @@ exports.createPost = [
   passport.authenticate("jwt", { session: false }),
   body("content")
     .trim()
-    .notEmpty()
-    .withMessage("Content is required")
-    .isLength({ max: 500 })
-    .withMessage("Content exceeds the maximum length"),
+    .custom((value, { req }) => {
+      if (!req.body.imgUrl && !value) {
+        throw new Error("Content is required when imgUrl is not provided.");
+      } else if (value && value.length > 400) {
+        throw new Error("Content exceeds the maximum length");
+      }
+      return true;
+    }),
+  body("imgUrl")
+    .trim()
+    .custom((value, { req }) => {
+      if (!req.body.content && !value) {
+        throw new Error("imgUrl is required when content is not provided.");
+      }
+      return true;
+    }),
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);

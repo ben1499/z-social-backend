@@ -19,7 +19,7 @@ exports.getProfile = [
     try {
       const user = await prisma.user.findUnique({
         where: {
-          id: req.user.user_id
+          id: req.user.user_id,
         },
         select: {
           id: true,
@@ -27,9 +27,9 @@ exports.getProfile = [
           username: true,
           profileImgUrl: true,
           coverImgUrl: true,
-          createdAt: true
-        }
-      })
+          createdAt: true,
+        },
+      });
 
       user.createdAt = formatDate(user.createdAt);
 
@@ -38,7 +38,7 @@ exports.getProfile = [
       console.log(err);
       res.status(500).json({ message: "Something went wrong" });
     }
-  })
+  }),
 ];
 
 exports.getUser = [
@@ -55,24 +55,24 @@ exports.getUser = [
             following: true,
             posts: {
               where: {
-                parentPostId: null
-              }
+                parentPostId: null,
+              },
             },
-            reposts: true
+            reposts: true,
           },
         },
       },
     });
-    // Check if user is followed by logged in user
-    const follow = await prisma.follow.findUnique({
-      where: {
-        followedById_followingId: {
-          followedById: req.user.user_id,
-          followingId: user.id,
-        },
-      },
-    });
     if (user) {
+      // Check if user is followed by logged in user
+      const follow = await prisma.follow.findUnique({
+        where: {
+          followedById_followingId: {
+            followedById: req.user.user_id,
+            followingId: user.id,
+          },
+        },
+      });
       const { password, _count, ...formattedUser } = user;
       formattedUser.createdAt = `${user.createdAt.toLocaleString("en-US", {
         month: "long",
@@ -201,15 +201,15 @@ exports.followUser = [
 
         const currentUser = await prisma.user.findUnique({
           where: { id: req.user.user_id },
-          select: { name: true }
+          select: { name: true },
         });
         await prisma.notification.create({
           data: {
             type: "FOLLOW",
             senderId: req.user.user_id,
             receiverId: +req.params.id,
-            content: `${currentUser.name} followed you`
-          }
+            content: `${currentUser.name} followed you`,
+          },
         });
 
         return res.json({ message: "Followed user successfully" });
@@ -245,9 +245,9 @@ exports.unfollowUser = [
           where: {
             senderId: req.user.user_id,
             receiverId: +req.params.id,
-            type: "FOLLOW"
-          }
-        })
+            type: "FOLLOW",
+          },
+        });
         return res.json({ message: "Unfollowed user successfully" });
       } catch (err) {
         if (err.code === "P2025") {
@@ -268,33 +268,33 @@ exports.getUserMedia = [
     try {
       const user = await prisma.user.findUnique({
         where: {
-          id: +req.params.id
+          id: +req.params.id,
         },
         include: {
           posts: {
             where: {
               imgUrl: {
-                not: null
-              }
+                not: null,
+              },
             },
             select: {
               id: true,
-              imgUrl: true
-            }
-          }
-        }
+              imgUrl: true,
+            },
+          },
+        },
       });
-  
+
       if (!user) {
         res.status(404).json({ message: "User not found" });
       }
-  
+
       const posts = user.posts;
-  
+
       res.json({ data: posts });
     } catch (err) {
       console.log(err);
       res.status(500).json({ message: "Something went wrong" });
     }
-  })
-]
+  }),
+];
