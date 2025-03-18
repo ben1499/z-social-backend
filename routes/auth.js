@@ -11,11 +11,4 @@ router.get("/twitter", authController.twitterAuth);
 
 router.get("/twitter/callback", authController.twitterAuthCallback);
 
-// router.get("/twitter/logout", (req, res, next) => {
-//     req.logout(() => {
-//         res.sendStatus(200);
-//     });
-// });
-
-
 module.exports = router;

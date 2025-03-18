@@ -10,6 +10,9 @@ const postRouter = require("./routes/post");
 const notificationRouter = require("./routes/notification");
 const postController = require("./controllers/postController");
 const cors = require("cors");
+const compression = require("compression");
+const helmet = require("helmet");
+const RateLimit = require("express-rate-limit");
 
 require("./config/passport")(passport);
 
@@ -17,7 +20,27 @@ const app = express();
 
 app.use(cors());
 
-// app.use(express.urlencoded({ extended: true }));
+// Set up rate limiter: maximum of 30 requests per minute
+const limiter = RateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 30,
+});
+// Apply rate limiter to all requests
+app.use(limiter);
+
+// Compress all routes
+app.use(compression());
+
+// Add helmet to the middleware chain.
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      "script-src": ["'self'"],
+      "img-src": ["'self'", "res.cloudinary.com"],
+    },
+  })
+);
+
 app.use(express.json());
 
 // express session setup for use in twitter oauth2.0 auth
