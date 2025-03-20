@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app.js",
-    "watch": "node --watch app.js"
+    "watch": "node --watch app.js",
+    "build": "pnpm i && pnpm dlx prisma migrate deploy && node app.js"
   },
   "keywords": [],
   "author": "",
