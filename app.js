@@ -43,6 +43,8 @@ app.use(
 
 app.use(express.json());
 
+app.set('trust proxy', 1);
+
 // express session setup for use in twitter oauth2.0 auth
 app.use(
   session({
