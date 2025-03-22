@@ -24,7 +24,7 @@ Backend for Z Social application, built with Node.js and Express, managing user 
 
 ## 🔗 Links
 
-- **Live Demo:** []()
+- **Live Demo:** [https://z-social-ben1499.netlify.app](https://z-social-ben1499.netlify.app)
 - **Frontend Repository:** [https://github.com/ben1499/z-social](https://github.com/ben1499/z-social)
 
 ## 🚀 Technologies
