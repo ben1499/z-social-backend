@@ -64,12 +64,21 @@ exports.getUser = [
       },
     });
     if (user) {
-      // Check if user is followed by logged in user
+      // Check if logged in user is following user
       const follow = await prisma.follow.findUnique({
         where: {
           followedById_followingId: {
             followedById: req.user.user_id,
             followingId: user.id,
+          },
+        },
+      });
+      // Check if logged in user is followed by user
+      const followsUser = await prisma.follow.findUnique({
+        where: {
+          followedById_followingId: {
+            followedById: user.id,
+            followingId: req.user.user_id,
           },
         },
       });
@@ -86,6 +95,7 @@ exports.getUser = [
         : follow
         ? true
         : false;
+      formattedUser.followsYou = followsUser ? true : false;
       return res.json({ data: formattedUser });
     }
     return res.status(404).json({ message: "User not found" });
