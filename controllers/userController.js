@@ -283,9 +283,18 @@ exports.getUserMedia = [
         include: {
           posts: {
             where: {
-              imgUrl: {
-                not: null,
-              },
+              AND: [
+                {
+                  imgUrl: {
+                    not: null,
+                  },
+                },
+                {
+                  imgUrl: {
+                    not: "",
+                  },
+                },
+              ],
             },
             select: {
               id: true,
